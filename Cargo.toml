@@ -7,6 +7,9 @@ edition = "2024"
 rust-version = "1.88.0"
 keywords = ["css", "sprite"]
 license = "MIT"
+homepage = "https://github.com/Jozefpodlecki/another-css-sprite"
+repository = "https://github.com/Jozefpodlecki/another-css-sprite"
+readme = "README.md"
 
 [lib]
 name = "anothercssspritelib"

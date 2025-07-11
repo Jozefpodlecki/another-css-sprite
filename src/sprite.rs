@@ -1,9 +1,9 @@
 use anyhow::*;
 use clap::ValueEnum;
-use image::{DynamicImage, GenericImage, ImageBuffer, RgbaImage};
+use image::{codecs::webp::WebPEncoder, DynamicImage, GenericImage, ImageBuffer, RgbaImage};
 use log::*;
 use rect_packer::{Config, Packer};
-use std::fs;
+use std::{fs::{self, File}, path::Path};
 use walkdir::WalkDir;
 
 /// Layout options for the sprite sheet.
@@ -61,8 +61,31 @@ impl Sprite {
         layout: Layout,
     ) -> Result<()> {
         let (sprite, css) = self.build_sprite(layout)?;
-        sprite.save(output_image).context("Failed to save sprite image")?;
+
+        let ext = Path::new(output_image)
+            .extension()
+            .and_then(|e| e.to_str())
+            .unwrap_or("")
+            .to_lowercase();
+
+        match ext.as_str() {
+            "webp" => {
+                let file = File::create(output_image).context("Failed to create WebP file")?;
+                let encoder = WebPEncoder::new_lossless(file);
+                encoder.encode(
+                    &sprite,
+                    sprite.width(),
+                    sprite.height(),
+                    image::ColorType::Rgba8.into(),
+                ).context("Failed to encode WebP image")?;
+            }
+            _ => {
+                sprite.save(output_image).context("Failed to save sprite image")?;
+            }
+        }
+
         fs::write(output_css, css).context("Failed to write CSS")?;
+
         Ok(())
     }
 
@@ -121,40 +144,17 @@ impl Sprite {
             },
         );
 
-        let mut bin_width = 256;
+        let mut bin_width = 512;
         while bin_width < max_width || bin_width * bin_width < total_area {
             bin_width *= 2;
         }
 
-        let mut bin_height = total_area / bin_width;
-        if total_area % bin_width != 0 {
-            bin_height += 1;
-        }
-
-        (bin_width, bin_height)
+        (bin_width, bin_width)
     }
 
     pub fn build_packed(&self) -> Result<(RgbaImage, String)> {
         
         let (width, height) = self.estimate_bin_size();
-        // let (total_area, max_width, max_height) = self.images.iter().fold(
-        //     (0u32, 0u32, 0u32),
-        //     |(area_acc, w_max, h_max), (_, img)| {
-        //         let w = img.width();
-        //         let h = img.height();
-        //         (
-        //             area_acc + w * h,
-        //             w_max.max(w),
-        //             h_max.max(h),
-        //         )
-        //     },
-        // );
-
-        // let mut atlas_width = (total_area as f64).sqrt().ceil() as i32;
-        // if atlas_width < max_width as i32 {
-        //     atlas_width = max_width as i32;
-        // }
-        // let estimated_height = (total_area as f64 / atlas_width as f64).ceil() as i32;
 
         info!("Sprite dimension {}:{}", width, height);
 
@@ -179,6 +179,7 @@ impl Sprite {
 
         let mut sprite = ImageBuffer::new(width as u32, height as u32);
         let mut css = String::new();
+        let mut used_height = 0;
 
         for (name, rect, img) in placements {
             sprite.copy_from(img, rect.x as u32, rect.y as u32)?;
@@ -191,9 +192,16 @@ impl Sprite {
                 img.height()
             );
             css.push_str(css_rule);
+
+            let bottom = rect.y + img.height() as i32;
+            if bottom as u32 > used_height {
+                used_height = bottom as u32;
+            }
         }
 
-        Ok((sprite, css))
+        let cropped_sprite = image::imageops::crop(&mut sprite, 0, 0, width as u32, used_height).to_image();
+
+        Ok((cropped_sprite, css))
     }
 
     fn build_horizontal(&self) -> Result<(RgbaImage, String)> {
