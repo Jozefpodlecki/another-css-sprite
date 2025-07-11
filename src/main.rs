@@ -1,9 +1,8 @@
-use std::fs::{create_dir};
 use anyhow::*;
 
-use anothercssspritelib::utils::rename_files_with_prefix;
 use anothercssspritelib::*;
 use clap::Parser;
+use log::debug;
 use simple_logger::SimpleLogger;
 
 pub fn main() -> Result<()> {
@@ -19,6 +18,7 @@ pub fn main() -> Result<()> {
         .with_level(log_level)
         .init().unwrap();
    
+    debug!("Using layout: {:?}", args.layout);
 
     let sprite = Sprite::new(&args.input);
     sprite.generate_sprite_and_css(&args.output, &args.css, args.layout)?;

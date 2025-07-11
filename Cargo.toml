@@ -1,10 +1,12 @@
 [package]
 name = "another-css-sprite"
-version = "0.0.3"
+version = "0.0.1"
 authors = ["Jozef Podlecki"]
 description = "A tiny CLI that makes your images get along — finally."
 edition = "2024"
 rust-version = "1.88.0"
+keywords = ["css", "sprite"]
+license = "MIT"
 
 [lib]
 name = "anothercssspritelib"
@@ -21,3 +23,4 @@ clap = { version = "4.5", features = ["derive"] }
 log = "0.4.18"
 anyhow = "1.0.96"
 regex = "1.11.1"
+rect_packer = "0.2.1"
