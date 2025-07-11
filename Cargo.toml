@@ -1,0 +1,19 @@
+[package]
+name = "another-css-sprite"
+version = "0.0.3"
+authors = ["Jozef Podlecki"]
+description = "A tiny CLI that makes your images get along — finally."
+edition = "2024"
+rust-version = "1.88.0"
+
+[lib]
+name = "anothercssspritelib"
+
+[[bin]]
+name = "anothercssspritecli"
+path = "src/main.rs"
+
+[dependencies]
+image = { version = "0.25.6" }
+walkdir = { version = "2" }
+clap = { version = "4.5", features = ["derive"] }
