@@ -1,5 +1,7 @@
 use clap::Parser;
 
+use crate::sprite::Layout;
+
 #[derive(Parser)]
 #[command(author, version, about)]
 pub struct CliArgs {
@@ -14,4 +16,12 @@ pub struct CliArgs {
     /// Output CSS file (e.g., sprite.css)
     #[arg(short, long, default_value_t = String::from("sprite.css"))]
     pub css: String,
+
+    /// Layout direction: horizontal or vertical
+    #[arg(short, long, value_enum, default_value_t = Layout::Vertical)]
+    pub layout: Layout,
+
+    /// Verbosity (-v, -vv, -vvv)
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    pub verbose: u8,
 }

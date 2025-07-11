@@ -14,6 +14,10 @@ name = "anothercssspritecli"
 path = "src/main.rs"
 
 [dependencies]
+simple_logger = "5.0.0"
 image = { version = "0.25.6" }
 walkdir = { version = "2" }
 clap = { version = "4.5", features = ["derive"] }
+log = "0.4.18"
+anyhow = "1.0.96"
+regex = "1.11.1"
