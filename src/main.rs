@@ -21,7 +21,11 @@ pub fn main() -> Result<()> {
     debug!("Using layout: {:?}", args.layout);
 
     let sprite = Sprite::new(&args.input);
-    sprite.generate_sprite_and_css(&args.output, &args.css, args.layout)?;
+    sprite.generate_sprite_and_css(
+        &args.output,
+        &args.css,
+        args.layout,
+        args.minify_css)?;
 
     Ok(())
 }

@@ -59,8 +59,9 @@ impl Sprite {
         output_image: &str,
         output_css: &str,
         layout: Layout,
+        minify_css: bool
     ) -> Result<()> {
-        let (sprite, css) = self.build_sprite(layout)?;
+        let (sprite, mut css_rules) = self.build_sprite(layout)?;
 
         let ext = Path::new(output_image)
             .extension()
@@ -84,9 +85,26 @@ impl Sprite {
             }
         }
 
-        fs::write(output_css, css).context("Failed to write CSS")?;
+        if minify_css {
+            css_rules = Self::minify_css(css_rules);
+        }
+
+        fs::write(output_css, css_rules).context("Failed to write CSS")?;
 
         Ok(())
+    }
+
+    fn minify_css(css: String) -> String {
+        css.lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .collect::<String>()
+            .replace(": ", ":")
+            .replace("; ", ";")
+            .replace(" {", "{")
+            .replace("{ ", "{")
+            .replace(" }", "}")
+            .replace("} ", "}")
     }
 
     fn build_sprite(&self, layout: Layout) -> Result<(RgbaImage, String)> {
@@ -198,6 +216,8 @@ impl Sprite {
                 used_height = bottom as u32;
             }
         }
+
+        println!("height: {height}, used_height {used_height}");
 
         let cropped_sprite = image::imageops::crop(&mut sprite, 0, 0, width as u32, used_height).to_image();
 

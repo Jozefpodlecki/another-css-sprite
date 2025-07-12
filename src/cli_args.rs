@@ -21,6 +21,10 @@ pub struct CliArgs {
     #[arg(short, long, value_enum, default_value_t = Layout::Vertical)]
     pub layout: Layout,
 
+    /// Minify the generated CSS output
+    #[arg(long, default_value_t = true)]
+    pub minify_css: bool,
+
     /// Verbosity (-v, -vv, -vvv)
     #[arg(short, long, action = clap::ArgAction::Count)]
     pub verbose: u8,
