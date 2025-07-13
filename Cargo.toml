@@ -1,3 +1,9 @@
+[workspace]
+members = [
+    ".",
+    "utils"
+]
+
 [package]
 name = "another-css-sprite"
 version = "0.0.2"

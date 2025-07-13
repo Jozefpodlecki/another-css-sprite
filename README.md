@@ -32,5 +32,6 @@ anothercssspritecli.exe --input C:\images --layout packed --output test.webp
 - `--input` — Path to your input folder containing images.
 - `--layout` — Layout style: `horizontal`, `vertical`, or `packed`.
 - `--output` — Output sprite image filename (`.png` or `.webp`).
+- `--minify-css` — Minify the generated CSS. Default: true.
 
 CSS is generated alongside the sprite image automatically.

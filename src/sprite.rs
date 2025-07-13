@@ -61,7 +61,7 @@ impl Sprite {
         layout: Layout,
         minify_css: bool
     ) -> Result<()> {
-        let (sprite, mut css_rules) = self.build_sprite(layout)?;
+        let (sprite, mut css_rules) = self.build_sprite(layout, output_image)?;
 
         let ext = Path::new(output_image)
             .extension()
@@ -107,21 +107,21 @@ impl Sprite {
             .replace("} ", "}")
     }
 
-    fn build_sprite(&self, layout: Layout) -> Result<(RgbaImage, String)> {
+    fn build_sprite(&self, layout: Layout, output_image: &str) -> Result<(RgbaImage, String)> {
         if self.images.is_empty() {
             return Err(anyhow!("No images found in input directory"));
         }
 
         let (sprite, css) = match layout {
-            Layout::Vertical => self.build_vertical()?,
-            Layout::Horizontal => self.build_horizontal()?,
-            Layout::Packed => self.build_packed()?
+            Layout::Vertical => self.build_vertical(output_image)?,
+            Layout::Horizontal => self.build_horizontal(output_image)?,
+            Layout::Packed => self.build_packed(output_image)?
         };
 
         Ok((sprite, css))
     }
 
-    fn build_vertical(&self) -> Result<(RgbaImage, String)> {
+    fn build_vertical(&self, output_image: &str) -> Result<(RgbaImage, String)> {
         
         let (max_width, total_height) = self.images.iter().fold((0, 0), |(w_max, h_sum), (_, img)| {
             (w_max.max(img.width()), h_sum + img.height())
@@ -139,14 +139,8 @@ impl Sprite {
         let mut y_offset = 0;
         for (name, img) in &self.images {
             sprite.copy_from(img, 0, y_offset).context("Copy failed")?;
-            let css_rule = &format!(
-                ".{} {{ background-position: 0px -{}px; width: {}px; height: {}px; }}\n",
-                name,
-                y_offset,
-                img.width(),
-                img.height()
-            );
-            css.push_str(css_rule);
+            let css_rule = Self::make_css_rule(&name, output_image, 0, -(y_offset as i32), img.width(), img.height());
+            css.push_str(&css_rule);
 
             y_offset += img.height();
         }
@@ -170,7 +164,7 @@ impl Sprite {
         (bin_width, bin_width)
     }
 
-    pub fn build_packed(&self) -> Result<(RgbaImage, String)> {
+    pub fn build_packed(&self, output_image: &str) -> Result<(RgbaImage, String)> {
         
         let (width, height) = self.estimate_bin_size();
 
@@ -201,15 +195,8 @@ impl Sprite {
 
         for (name, rect, img) in placements {
             sprite.copy_from(img, rect.x as u32, rect.y as u32)?;
-            let css_rule = &format!(
-                ".{} {{ background-position: -{}px -{}px; width: {}px; height: {}px; }}\n",
-                name,
-                rect.x,
-                rect.y,
-                img.width(),
-                img.height()
-            );
-            css.push_str(css_rule);
+            let css_rule = Self::make_css_rule(&name, output_image, -rect.x, -rect.y,img.width(), img.height());
+            css.push_str(&css_rule);
 
             let bottom = rect.y + img.height() as i32;
             if bottom as u32 > used_height {
@@ -217,14 +204,14 @@ impl Sprite {
             }
         }
 
-        println!("height: {height}, used_height {used_height}");
+        debug!("Cropping image");
 
         let cropped_sprite = image::imageops::crop(&mut sprite, 0, 0, width as u32, used_height).to_image();
 
         Ok((cropped_sprite, css))
     }
 
-    fn build_horizontal(&self) -> Result<(RgbaImage, String)> {
+    fn build_horizontal(&self, output_image: &str) -> Result<(RgbaImage, String)> {
         let (total_width, max_height) = self.images.iter().fold((0, 0), |(w_sum, h_max), (_, img)| {
             (w_sum + img.width(), h_max.max(img.height()))
         });
@@ -241,18 +228,24 @@ impl Sprite {
         let mut x_offset = 0;
         for (name, img) in &self.images {
             sprite.copy_from(img, x_offset, 0).context("Copy failed")?;
-            let css_rule = &format!(
-                ".{} {{ background-position: -{}px 0px; width: {}px; height: {}px; }}\n",
-                name,
-                x_offset,
-                img.width(),
-                img.height()
-            );
-            css.push_str(css_rule);
+            let css_rule = Self::make_css_rule(&name, output_image, -(x_offset as i32), 0,img.width(), img.height());
+            css.push_str(&css_rule);
 
             x_offset += img.width();
         }
 
         Ok((sprite, css))
+    }
+
+    fn make_css_rule(name: &str, output_image: &str, x: i32, y: i32, w: u32, h: u32) -> String {
+        format!(
+            ".{} {{ background-image: url('{}'); background-position: {}px {}px; width: {}px; height: {}px; }}\n",
+            name,
+            output_image,
+            x,
+            y,
+            w,
+            h
+        )
     }
 }
