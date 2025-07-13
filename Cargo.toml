@@ -6,7 +6,7 @@ members = [
 
 [package]
 name = "another-css-sprite"
-version = "0.0.2"
+version = "0.0.3"
 authors = ["Jozef Podlecki"]
 description = "A tiny CLI that makes your images get along — finally."
 edition = "2024"
